@@ -1,0 +1,109 @@
+﻿EC ENGR 117/CS M138: Computer Systems Security
+	Fall 2025
+	________________
+
+
+Assignment 2: Software Security
+Deadline: November 07th at 11:59 pm 
+Overview
+The goal of this assignment is to introduce students to the concepts of software security with a focus on binary exploitation. You are taking on the role of a hacker whose target is Bruin Games, an indie game company created by UCLA students.
+This assignment is broken into 4 parts. Parts 1 and 2 involve implementing two classical binary exploitation attacks (format strings and buffer overflow attacks) Part 3 involves implementing a bypass to security mitigations. Part 4 will involve answering some questions about attacks and defenses such as Control-Flow Integrity (CFI), Return-Oriented Programming (ROP), ASLR & software security testing such as symbolic execution.
+We will provide compiled binaries for students in the class to work on the assignment with solution submission to Gradescope. We ask that students not attempt to perform out of scope attacks that attack the grading infrastructure such as DDoS attacks or exfiltrating non-publicly released assignment components. It is recommended that students develop and test exploits locally first before submitting to the autograder. However, we encourage students to find bugs and issues with the assignment application! If students identify any additional vulnerabilities in the application, please privately message the course instructors. 😀
+Assignment Code: Repository Link
+Assignment Environment: GitHub Codespace
+________________
+
+
+Installation
+GitHub Codespaces.
+For this assignment, we have set up an x86 environment for you to test and perform all of the attacks. This environment contains all of the tools you will need to complete the assignment instead of having to install it below. In order to access this environment, you will need to create a GitHub account. The free-tier should be enough to complete this assignment but, you can upgrade your account to GitHub Pro using the GitHub Student Developers Pack with your ucla.edu email address to get access to more compute. It is recommended that you work on the online environment but you are free to complete the assignment locally if you have an x86-64 environment.
+Assignment GitHub Codespace: Create a New Codespace (Note that in order to use the GitHub Codespace for this assignment, please fork the assignment repository and select your forked repository when creating the Codespace)
+  
+
+After you create your codespace, you can access it https://github.com/codespaces/ so that you can avoid any environment issues.
+pwntools.
+pwntools is a Python library which allows for rapid development of exploits for binary exploitation. It comes with a lot of helpful tools for finding information within binaries and for consistently running exploits.
+Installation Instructions: GitHub Codespaces will have this installed for you. (If not, please use the following command for installation: python3 -m pip install pwntools)
+GDB
+GNU Debugger (GDB) is a helpful systems programming tool which allows you to debug binaries. It has a lot of powerful options which allow you to view different parts of memory and set breakpoints. We will be using GDB Enhanced Features (GEF)  which is an extension to GDB containing helpful shortcuts for writing exploits. Note: by default GEF displays assembly in Intel syntax instead of AT&T which is what GDB uses by default.
+GDB Tutorial: GDB Handout
+To use pwntools with GDB in the code space, you need to 
+        ``
+                sudo apt update
+sudo apt install tmux
+``
+When you write the script to interact with gdb, you need to 
+```
+from pwn import *
+context.terminal = ['tmux', 'splitw', '-h']
+```
+Also, before run your script, please run  `tmux` in the terminal
+________________
+
+
+Assignment Prompts.
+The following are parts 1-4 of the assignment. Each part contains instructions and guiding questions to complete each part. Try to take notes and document each part of your exploration process while completing the assignment. These notes and the responses to the questions should be included in your report submitted on GradeScope.
+________________
+
+
+Part 1. Format Me
+Bruin Games is planning on releasing a new feature where you are able to send a secret code containing a gift package from one user to another. You want to be able to steal this code to redeem it yourself. The goal of this part is to use a format string attack to leak the secret code and then submit it yourself. Unfortunately, you need to do this 10 times in order to redeem the flag. Note: You will need to use pwntools to write your exploit script, the following tutorial might help you.
+Submit a Python file called part1.py containing your exploit.
+Questions:
+1. How far up the stack is the random variable? What format string would be able to leak this value? This list of format string specifiers may be helpful.
+2. Suppose the stack did not contain relevant values that would violate the confidentiality of a program. Why are format strings still potentially dangerous? Describe a scenario where such an attack may be relevant (Hint: C has an underused write format string).
+Prompt:
+1. After you know the logic correctly, you can try running `./format-me`, to look at the interaction process, i.e., what kinds of string you received? What kinds of things do you need to input? 
+2. You can read format-me.c first and know the game logic, please mainly focus on the function void game(),(Though In CTF Game, this is mostly not provided)
+3. Then you can write the exploit part1.py, I have provided part of code, you only need to write the part that I commented ```Add your code Here```
+4. There is a sample flag named flag-1.txt under the directory, if you part1.py is correct, after you run that, you could successfully see the same  flag in the terminal
+5. To answer the first question, you need to use gdb and set break point, then to look at the exploit point
+6. See readme.md under format-string
+________________
+
+
+Part 2. Overflow the World
+The second part of this assignment involves implementing a buffer overflow attack. This time, you are attacking the registration service for Bruin Games. The goal is to perform a buffer overflow attack where you call the print_flag function which is currently not accessed within the binary. This is also known as a ret2win attack.
+Submit a Python file called part2.py containing your exploit.
+Questions:
+1. How far is the return address of your input name up the stack? What value can you overwrite the return address with to call? 
+2. Suppose the win/print_flag function was removed from this binary. Can you still achieve remote code execution (i.e. calling system(“/bin/bash”))? Even without an explicit call to the system function, where can you find syscalls? You can assume that you have whatever gadgets or format strings needed to perform this attack. Hint: Think about ret2libc.
+Prompts:
+1. Complete the code in part2.py
+2. If you are right, you will see the flag after run part2.py
+3. The step is similar to Part1. When you get the address and write the payload, please remember to add 8-byte stack save area.
+________________
+
+
+Part 3. Killing the Canary
+The third part of this lab involves implementing a bypass to the security mitigation against buffer overflows, stack canaries. If there only exists a single vulnerability with a buffer overflow, stack canaries act as a great mitigation against buffer overflow. However, if there exists multiple vulnerabilities, you may still be vulnerable to attacks. Your goal is to take advantage of a format string vulnerability to leak the value of stack canary allowing you to still perform a buffer overflow attack. Note: Due to stack canaries sometimes having special characters, your completed exploit may not be consistent. You can resubmit multiple times to the autograder and the highest score will be taken for the assignment.
+Submit a Python file called part3.py containing your exploit.
+Questions:
+1. Run checksec on this binary. Explain what each security mitigation mentioned in the output means and at what level each mitigation is enabled. Is this binary still vulnerable to attacks?
+2. Besides local variables, what other potential values exist on the stack that make format string attacks (read only) so dangerous?
+Prompts:
+4. Complete the code in part3.py
+5. If you are right, you will see the flag after run part3.py
+________________
+
+
+Part 4. Gaming Safe
+This part involves answering some questions on various topics we covered this unit with a focus on defenses.
+Questions:
+1. In return-oriented-programming (ROP) attacks, it relies upon chaining gadgets together within x86 assembly. Even without explicit instructions (for example, system(“/bin/sh”)) why is it still possible to achieve arbitrary code execution in modem systems using gadgets from libraries such as libc? Hint: you may want to reference this paper.
+2. Suppose you had the following Control Flow Graphs (CFG) which represents the program in Part 2. Draw your change to the control flow and explain how this violates Control-Flow Integrity (CFI). Is this a data flow graph, call graph, etc? The arrows represent the function calls (the number of function calls currently does not match the program due to diagram space).
+  
+
+3. Symbolic execution is a program analysis technique which allows finding vulnerabilities for a program by analyzing constraints with a theorem prover. However, there are some issues with symbolic execution which are improved by concolic execution instead. State one issue with symbolic execution and explain why it is improved by concolic execution.
+4. Suppose you do not set the NX-bit for the stack and have both ASLR and PIE enabled. With a sufficiently large enough buffer overflow attack, is it possible to perform this attack? In other words, how would you be able to increase the attack probability’s success even with addresses on the stack being randomized?
+
+
+________________
+
+
+Submission
+Submission will be handled through Gradescope. You must submit part1.py, part2.py, and part3.py containing your solutions for parts 1-3 of the assignment. Finally, include any notes you have taken on each part of the assignment and responses to all of the questions in a PDF file called report.pdf. This will be used for partial credit when grading if necessary.
+
+
+Grading
+This assignment will be graded out of 20 points and will involve some autograding and some manual grading. For parts 1-3, each part is worth 3 points. If the attack succeeds through Gradescope submission, then full points are earned. If the attack is not successful then 1-2 points per part can be earned for partial credit based on the contents of part1.py, part2.py, part3.py, and report.pdf. All questions are worth 1 point each and are graded on a good effort for completion. Finally, 1 point will be awarded for a completed report.pdf submission.
